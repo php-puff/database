@@ -1,0 +1,65 @@
+{
+    "name": "puff/database",
+    "description": "Fiber-scoped PDO and query builder integration for Puff",
+    "type": "library",
+    "keywords": [
+        "php",
+        "database",
+        "fiber",
+        "pdo",
+        "query-builder",
+        "puff"
+    ],
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "ext-pdo": "*",
+        "puff/config": "dev-main",
+        "puff/console": "dev-main",
+        "puff/di": "dev-main",
+        "psr/log": "^3.0"
+    },
+    "require-dev": {
+        "cycle/annotated": "^4.6",
+        "illuminate/database": "^12.0",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^11.0",
+        "topthink/think-orm": "^4.0"
+    },
+    "suggest": {
+        "cycle/annotated": "Install this package to enable Cycle ORM, Cycle Database, and attribute-mapped Entity classes",
+        "illuminate/database": "Enables Fiber-aware Eloquent ORM integration",
+        "topthink/think-orm": "Enables Fiber-aware Think ORM integration"
+    },
+    "autoload": {
+        "psr-4": {
+            "Puff\\Database\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Puff\\Database\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "puff": {
+            "config": {"database.php": "config/database.php"},
+            "providers": [
+                "Puff\\Database\\ServiceProvider"
+            ],
+            "commands": [
+                "Puff\\Database\\ConsoleProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "config": {
+        "preferred-install": "dist",
+        "sort-packages": true
+    },
+    "scripts": {
+        "analyse": "phpstan analyse src tests --level=8 --no-progress --memory-limit=1G",
+        "test": "phpunit tests"
+    }
+}
