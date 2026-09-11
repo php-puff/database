@@ -69,7 +69,7 @@ final readonly class EntityCommand implements Contract
 
         $class = $this->generator->generate(
             $name,
-            'Entity',
+            'Database\\Entity',
             $this->stub,
             $input->hasOption('force'),
             ['%TABLE%' => $table, '%PROPERTIES%' => $this->properties($columns)],

@@ -113,7 +113,7 @@ For Cycle integration, install `cycle/annotated`; it already requires compatible
 
 ### Eloquent
 
-Models use the `Model` namespace, live in `model/`, and extend `Illuminate\Database\Eloquent\Model` directly. The adapter installs a Fiber-aware Illuminate connection resolver; each Fiber owns its Illuminate connections and transaction state.
+Models use the `Database\Model` namespace, live in `database/Model/`, and extend `Illuminate\Database\Eloquent\Model` directly. The adapter installs a Fiber-aware Illuminate connection resolver; each Fiber owns its Illuminate connections and transaction state.
 
 ```php
 namespace Model;
@@ -128,7 +128,7 @@ final class User extends Model
 
 ### Cycle ORM
 
-Entities use the `Entity` namespace, live in `entity/`, and use Cycle attributes. Every Fiber receives an independent `EntityManager`, `UnitOfWork`, ORM, and Cycle database context. The read-only compiled mapping is cached in `runtime/database/cycle.php`; changes to PHP entity files invalidate the cache by checksum.
+Entities use the `Database\Entity` namespace, live in `database/Entity/`, and use Cycle attributes. Every Fiber receives an independent `EntityManager`, `UnitOfWork`, ORM, and Cycle database context. The read-only compiled mapping is cached in `runtime/database/cycle.php`; changes to PHP entity files invalidate the cache by checksum.
 
 When `puff/console` is available, this package registers ORM generators automatically. The `model` command uses Think ORM when it is installed and falls back to Eloquent. The `entity` command is exposed when Cycle Annotated is installed:
 
@@ -157,7 +157,7 @@ final class User
 
 ### Think ORM
 
-Think models use `Model`, live in `model/`, and extend `think\Model`. Puff binds `think\DbManager` to a Fiber-aware resolver: each Fiber receives an independent manager, connection cache, PDO connection, statement state, and transaction counter.
+Think models use `Database\Model`, live in `database/Model/`, and extend `think\Model`. Puff binds `think\DbManager` to a Fiber-aware resolver: each Fiber receives an independent manager, connection cache, PDO connection, statement state, and transaction counter.
 
 ```bash
 ./puff model User

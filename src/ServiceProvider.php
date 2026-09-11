@@ -68,7 +68,7 @@ final class ServiceProvider extends BaseServiceProvider
             $root = \dirname($runtime);
             $registry->add(new CycleAdapter(
                 $manager,
-                $root . '/entity',
+                $root . '/database/Entity',
                 $runtime . '/database/cycle.php',
             ));
         }

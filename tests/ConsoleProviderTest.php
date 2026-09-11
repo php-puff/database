@@ -44,11 +44,12 @@ final class ConsoleProviderTest extends TestCase
         self::assertIsResource($stream);
 
         self::assertSame(0, $commands[0]->execute(Input::parse(['User']), new Output($stream)));
-        $model = $root . '/model/User.php';
+        $model = $root . '/database/Model/User.php';
         self::assertStringContainsString('use think\\Model;', (string) \file_get_contents($model));
 
         \unlink($model);
-        \rmdir($root . '/model');
+        \rmdir($root . '/database/Model');
+        \rmdir($root . '/database');
         \rmdir($root);
     }
 
@@ -70,14 +71,15 @@ final class ConsoleProviderTest extends TestCase
         self::assertIsResource($stream);
 
         self::assertSame(0, $command->execute(Input::parse(['Users']), new Output($stream)));
-        $entity = (string) \file_get_contents($root . '/entity/Users.php');
+        $entity = (string) \file_get_contents($root . '/database/Entity/Users.php');
         self::assertStringContainsString("#[Entity(table: 'users')]", $entity);
         self::assertStringContainsString("#[Column(type: 'primary')]", $entity);
         self::assertStringContainsString("#[Column(type: 'string', name: 'display_name', nullable: true)]", $entity);
         self::assertStringContainsString('public ?string $displayName = null;', $entity);
 
-        \unlink($root . '/entity/Users.php');
-        \rmdir($root . '/entity');
+        \unlink($root . '/database/Entity/Users.php');
+        \rmdir($root . '/database/Entity');
+        \rmdir($root . '/database');
         \rmdir($root);
     }
 

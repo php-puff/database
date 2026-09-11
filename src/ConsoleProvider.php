@@ -28,7 +28,7 @@ final class ConsoleProvider implements CommandProvider
         if ($model !== null) {
             yield new GenerateCommand(
                 'model',
-                'Model',
+                'Database\\Model',
                 \dirname(__DIR__) . '/stub/model.stub',
                 $generator,
                 ['%MODEL%' => $model],
