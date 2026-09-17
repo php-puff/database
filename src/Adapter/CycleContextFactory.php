@@ -78,7 +78,7 @@ final class CycleContextFactory
         $databases = [];
         foreach ($this->databases->configurations() as $name => $configuration) {
             $connections[$name] = $this->driver($configuration);
-            $databases[$name] = ['connection' => $name];
+            $databases[$name] = ['connection' => $name, 'prefix' => $configuration->prefix];
         }
         return new DatabaseManager(new DatabaseConfig([
             'default' => $this->databases->defaultConnection(),

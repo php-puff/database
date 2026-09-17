@@ -27,9 +27,21 @@ final class ConnectionConfigTest extends TestCase
 
         self::assertSame(0, $sqlite->port);
         self::assertSame('sqlite::memory:', $sqlite->dsn());
+        self::assertSame('', $sqlite->prefix);
         self::assertArrayNotHasKey('password', $sqlite->publicValues());
         self::assertFalse(Driver::SQLite->supportsAdvisoryLocks());
         self::assertTrue(Driver::PostgreSql->supportsTransactionalDdl());
         self::assertFalse(Driver::MySql->supportsTransactionalDdl());
+    }
+
+    public function testRejectsUnsafeTablePrefix(): void
+    {
+        $this->expectException(\Puff\Database\Exception\DatabaseException::class);
+
+        ConnectionConfig::fromArray('sqlite', [
+            'driver' => 'sqlite',
+            'database' => ':memory:',
+            'prefix' => 'puff-unsafe',
+        ]);
     }
 }

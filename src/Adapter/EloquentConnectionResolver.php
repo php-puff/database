@@ -98,9 +98,9 @@ final class EloquentConnectionResolver implements ConnectionResolverInterface
         $pdo = $configuration->connect();
         $config = $configuration->publicValues() + ['name' => $name];
         $connection = match ($configuration->driver) {
-            Driver::MySql => new MySqlConnection($pdo, $configuration->database, '', $config),
-            Driver::PostgreSql => new PostgresConnection($pdo, $configuration->database, '', $config),
-            Driver::SQLite => new SQLiteConnection($pdo, $configuration->database, '', $config),
+            Driver::MySql => new MySqlConnection($pdo, $configuration->database, $configuration->prefix, $config),
+            Driver::PostgreSql => new PostgresConnection($pdo, $configuration->database, $configuration->prefix, $config),
+            Driver::SQLite => new SQLiteConnection($pdo, $configuration->database, $configuration->prefix, $config),
         };
         return $connection;
     }

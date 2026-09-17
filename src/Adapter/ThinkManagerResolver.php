@@ -83,7 +83,7 @@ final class ThinkManagerResolver
             'password' => $config->password,
             'charset' => $config->charset,
             'params' => $config->options,
-            'prefix' => '',
+            'prefix' => $config->prefix,
             'break_reconnect' => false,
         ];
     }

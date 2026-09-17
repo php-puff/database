@@ -72,6 +72,18 @@ final class DatabaseManagerTest extends TestCase
         $manager->table('users; DROP TABLE users');
     }
 
+    public function testBuilderAppliesConnectionTablePrefix(): void
+    {
+        $manager = new DatabaseManager('sqlite', [
+            'sqlite' => ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => 'puff_'],
+        ]);
+        $manager->connection()->execute('CREATE TABLE puff_users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)');
+
+        $manager->table('users')->insert(['name' => 'Puff']);
+
+        self::assertSame('Puff', $manager->table('users')->first()['name'] ?? null);
+    }
+
     public function testReusesConnectionWithinFiberAndIsolatesFibers(): void
     {
         $manager = $this->manager();

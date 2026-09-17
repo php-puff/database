@@ -30,6 +30,7 @@ return [
             'username' => 'puff',
             'password' => '',
             'charset' => 'utf8mb4',
+            'prefix' => 'puff_',
             'options' => [],
         ],
     ],
@@ -37,6 +38,20 @@ return [
 ```
 
 Supported drivers are MySQL, PostgreSQL, and SQLite. Configuration is normalized into an immutable `ConnectionConfig`; credentials are never included in its public values or query logs.
+
+### Table prefix
+
+Set `prefix` per connection to prepend it to table names used by Puff's query builder and supported ORM adapters:
+
+```php
+$database->table('users')->get(); // SELECT ... FROM puff_users
+```
+
+The prefix must be empty or contain only letters, numbers, and underscores. Raw SQL is intentionally not rewritten; use the final table name explicitly in raw statements:
+
+```php
+$database->connection()->fetchOne('SELECT * FROM puff_users WHERE id = ?', [$id]);
+```
 
 ## Core API
 

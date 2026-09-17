@@ -50,7 +50,7 @@ final class Connection implements ConnectionInterface
 
     public function table(string $table): Query
     {
-        return new Query($this, $table);
+        return new Query($this, $this->configuration->prefix . $table);
     }
 
     /**

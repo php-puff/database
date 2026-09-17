@@ -26,6 +26,7 @@ final readonly class ConnectionConfig
         public string $username = '',
         public string $password = '',
         public string $charset = 'utf8mb4',
+        public string $prefix = '',
         public array $options = [],
     ) {
         if ($name === '' || !\preg_match('/^[A-Za-z_][A-Za-z0-9_.-]*$/', $name)) {
@@ -33,6 +34,9 @@ final readonly class ConnectionConfig
         }
         if ($database === '') {
             throw new DatabaseException("Database connection [{$name}] must define a database.");
+        }
+        if ($prefix !== '' && \preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $prefix) !== 1) {
+            throw new DatabaseException("Database connection [{$name}] has an invalid table prefix.");
         }
     }
 
@@ -59,6 +63,7 @@ final readonly class ConnectionConfig
             (string) ($values['username'] ?? ''),
             (string) ($values['password'] ?? ''),
             (string) ($values['charset'] ?? 'utf8mb4'),
+            (string) ($values['prefix'] ?? ''),
             $options,
         );
     }
@@ -100,6 +105,7 @@ final readonly class ConnectionConfig
             'host' => $this->host,
             'port' => $this->port,
             'charset' => $this->charset,
+            'prefix' => $this->prefix,
         ];
     }
 }
