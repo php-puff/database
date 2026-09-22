@@ -35,7 +35,7 @@ final readonly class ConnectionConfig
         if ($database === '') {
             throw new DatabaseException("Database connection [{$name}] must define a database.");
         }
-        if ($prefix !== '' && \preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/D', $prefix) !== 1) {
+        if ($prefix !== '' && \preg_match('/^[A-Za-z0-9_]+$/D', $prefix) !== 1) {
             throw new DatabaseException("Database connection [{$name}] has an invalid table prefix.");
         }
     }

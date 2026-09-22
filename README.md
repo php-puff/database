@@ -47,7 +47,7 @@ Set `prefix` per connection to prepend it to table names used by Puff's query bu
 $database->table('users')->get(); // SELECT ... FROM puff_users
 ```
 
-The prefix must be empty or contain only letters, numbers, and underscores. Raw SQL is intentionally not rewritten; use the final table name explicitly in raw statements:
+The prefix must be empty or contain only letters, numbers, and underscores; a numeric prefix such as `123_` is supported. Raw SQL is intentionally not rewritten; use the final table name explicitly in raw statements:
 
 ```php
 $database->connection()->fetchOne('SELECT * FROM puff_users WHERE id = ?', [$id]);

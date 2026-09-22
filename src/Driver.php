@@ -34,7 +34,7 @@ enum Driver: string
 
     public function quote(string $identifier): string
     {
-        if (!\preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $identifier)) {
+        if (!\preg_match('/^[A-Za-z0-9_]+$/', $identifier)) {
             throw new \InvalidArgumentException("Invalid SQL identifier [{$identifier}].");
         }
         $quote = $this === self::MySql ? '`' : '"';

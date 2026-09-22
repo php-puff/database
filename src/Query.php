@@ -26,7 +26,7 @@ final class Query
 
     public function __construct(private readonly ConnectionInterface $connection, private readonly string $table)
     {
-        self::identifier($table);
+        self::validateTable($table);
     }
 
     public function select(string ...$columns): self
@@ -75,7 +75,7 @@ final class Query
     public function get(): array
     {
         [$where, $bindings] = $this->compileWhere();
-        $sql = 'SELECT ' . \implode(', ', $this->columns) . " FROM {$this->table}{$where}" . $this->compileOrderLimit();
+        $sql = 'SELECT ' . \implode(', ', $this->columns) . " FROM {$this->table()}{$where}" . $this->compileOrderLimit();
         return $this->connection->fetchAll($sql, $bindings);
     }
 
@@ -90,7 +90,7 @@ final class Query
     {
         $column = $column === '*' ? '*' : self::identifier($column);
         [$where, $bindings] = $this->compileWhere();
-        $row = $this->connection->fetchOne("SELECT COUNT({$column}) AS aggregate FROM {$this->table}{$where}", $bindings);
+        $row = $this->connection->fetchOne("SELECT COUNT({$column}) AS aggregate FROM {$this->table()}{$where}", $bindings);
         return (int) ($row['aggregate'] ?? 0);
     }
 
@@ -101,7 +101,7 @@ final class Query
             throw new \InvalidArgumentException('Insert values must not be empty.');
         }
         $columns = \array_map(self::identifier(...), \array_keys($values));
-        $sql = "INSERT INTO {$this->table} (" . \implode(', ', $columns) . ') VALUES (' . \implode(', ', \array_fill(0, \count($columns), '?')) . ')';
+        $sql = "INSERT INTO {$this->table()} (" . \implode(', ', $columns) . ') VALUES (' . \implode(', ', \array_fill(0, \count($columns), '?')) . ')';
         $this->connection->execute($sql, \array_values($values));
         return (int) $this->connection->lastInsertId();
     }
@@ -118,7 +118,7 @@ final class Query
             $sets[] = self::identifier($column) . ' = ?';
         }
         return $this->connection->execute(
-            "UPDATE {$this->table} SET " . \implode(', ', $sets) . $where,
+            "UPDATE {$this->table()} SET " . \implode(', ', $sets) . $where,
             [...\array_values($values), ...$bindings],
         );
     }
@@ -126,7 +126,7 @@ final class Query
     public function delete(): int
     {
         [$where, $bindings] = $this->compileWhere();
-        return $this->connection->execute("DELETE FROM {$this->table}{$where}", $bindings);
+        return $this->connection->execute("DELETE FROM {$this->table()}{$where}", $bindings);
     }
 
     /** @return array{string, list<mixed>} */
@@ -166,5 +166,21 @@ final class Query
             throw new \InvalidArgumentException("Invalid SQL identifier [{$identifier}].");
         }
         return $identifier;
+    }
+
+    private static function validateTable(string $table): void
+    {
+        if (\preg_match('/^[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)?$/D', $table) !== 1) {
+            throw new \InvalidArgumentException("Invalid SQL table [{$table}].");
+        }
+    }
+
+    private function table(): string
+    {
+        return \implode('.', \array_map(function (string $part): string {
+            return \preg_match('/^[A-Za-z_]/', $part) === 1
+                ? $part
+                : $this->connection->driver()->quote($part);
+        }, \explode('.', $this->table)));
     }
 }

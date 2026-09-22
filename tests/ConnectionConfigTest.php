@@ -28,6 +28,12 @@ final class ConnectionConfigTest extends TestCase
         self::assertSame(0, $sqlite->port);
         self::assertSame('sqlite::memory:', $sqlite->dsn());
         self::assertSame('', $sqlite->prefix);
+        self::assertSame('123_', ConnectionConfig::fromArray('prefixed', [
+            'driver' => 'sqlite',
+            'database' => ':memory:',
+            'prefix' => '123_',
+        ])->prefix);
+        self::assertSame('"123_users"', Driver::SQLite->quote('123_users'));
         self::assertArrayNotHasKey('password', $sqlite->publicValues());
         self::assertFalse(Driver::SQLite->supportsAdvisoryLocks());
         self::assertTrue(Driver::PostgreSql->supportsTransactionalDdl());
