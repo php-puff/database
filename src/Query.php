@@ -32,7 +32,7 @@ final class Query
     public function select(string ...$columns): self
     {
         $clone = clone $this;
-        $clone->columns = $columns === [] ? ['*'] : \array_values(\array_map(self::identifier(...), $columns));
+        $clone->columns = $columns === [] ? ['*'] : \array_values(\array_map($this->identifier(...), $columns));
         return $clone;
     }
 
@@ -45,7 +45,7 @@ final class Query
             throw new \InvalidArgumentException("Unsupported where operator [{$operator}].");
         }
         $clone = clone $this;
-        $clone->wheres[] = ['boolean' => 'AND', 'column' => self::identifier($column), 'operator' => $operator, 'value' => $actual];
+        $clone->wheres[] = ['boolean' => 'AND', 'column' => $this->identifier($column), 'operator' => $operator, 'value' => $actual];
         return $clone;
     }
 
@@ -56,7 +56,7 @@ final class Query
             throw new \InvalidArgumentException('Order direction must be ASC or DESC.');
         }
         $clone = clone $this;
-        $clone->orders[] = ['column' => self::identifier($column), 'direction' => $direction];
+        $clone->orders[] = ['column' => $this->identifier($column), 'direction' => $direction];
         return $clone;
     }
 
@@ -88,7 +88,7 @@ final class Query
 
     public function count(string $column = '*'): int
     {
-        $column = $column === '*' ? '*' : self::identifier($column);
+        $column = $column === '*' ? '*' : $this->identifier($column);
         [$where, $bindings] = $this->compileWhere();
         $row = $this->connection->fetchOne("SELECT COUNT({$column}) AS aggregate FROM {$this->table()}{$where}", $bindings);
         return (int) ($row['aggregate'] ?? 0);
@@ -100,7 +100,7 @@ final class Query
         if ($values === []) {
             throw new \InvalidArgumentException('Insert values must not be empty.');
         }
-        $columns = \array_map(self::identifier(...), \array_keys($values));
+        $columns = \array_map($this->identifier(...), \array_keys($values));
         $sql = "INSERT INTO {$this->table()} (" . \implode(', ', $columns) . ') VALUES (' . \implode(', ', \array_fill(0, \count($columns), '?')) . ')';
         $this->connection->execute($sql, \array_values($values));
         return (int) $this->connection->lastInsertId();
@@ -115,7 +115,7 @@ final class Query
         [$where, $bindings] = $this->compileWhere();
         $sets = [];
         foreach ($values as $column => $_value) {
-            $sets[] = self::identifier($column) . ' = ?';
+            $sets[] = $this->identifier($column) . ' = ?';
         }
         return $this->connection->execute(
             "UPDATE {$this->table()} SET " . \implode(', ', $sets) . $where,
@@ -160,12 +160,17 @@ final class Query
         return $sql;
     }
 
-    private static function identifier(string $identifier): string
+    private function identifier(string $identifier): string
     {
         if ($identifier !== '*' && !\preg_match('/^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)?$/', $identifier)) {
             throw new \InvalidArgumentException("Invalid SQL identifier [{$identifier}].");
         }
-        return $identifier;
+
+        if ($identifier === '*') {
+            return $identifier;
+        }
+
+        return \implode('.', \array_map($this->connection->driver()->quote(...), \explode('.', $identifier)));
     }
 
     private static function validateTable(string $table): void
@@ -177,10 +182,6 @@ final class Query
 
     private function table(): string
     {
-        return \implode('.', \array_map(function (string $part): string {
-            return \preg_match('/^[A-Za-z_]/', $part) === 1
-                ? $part
-                : $this->connection->driver()->quote($part);
-        }, \explode('.', $this->table)));
+        return \implode('.', \array_map($this->connection->driver()->quote(...), \explode('.', $this->table)));
     }
 }
