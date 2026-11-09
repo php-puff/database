@@ -97,13 +97,19 @@ final class Query
     /** @param array<string, mixed> $values */
     public function insert(array $values): int
     {
+        $this->insertRow($values);
+        return (int) $this->connection->lastInsertId();
+    }
+
+    /** @param array<string, mixed> $values */
+    public function insertRow(array $values): int
+    {
         if ($values === []) {
             throw new \InvalidArgumentException('Insert values must not be empty.');
         }
         $columns = \array_map($this->identifier(...), \array_keys($values));
         $sql = "INSERT INTO {$this->table()} (" . \implode(', ', $columns) . ') VALUES (' . \implode(', ', \array_fill(0, \count($columns), '?')) . ')';
-        $this->connection->execute($sql, \array_values($values));
-        return (int) $this->connection->lastInsertId();
+        return $this->connection->execute($sql, \array_values($values));
     }
 
     /** @param array<string, mixed> $values */

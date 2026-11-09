@@ -84,6 +84,18 @@ final class DatabaseManagerTest extends TestCase
         self::assertSame('Puff', $manager->table('users')->first()['name'] ?? null);
     }
 
+    public function testInsertRowDoesNotRequireAutoIncrementSequence(): void
+    {
+        $manager = $this->manager();
+        $manager->connection()->execute('CREATE TABLE users (id TEXT PRIMARY KEY, name TEXT)');
+
+        self::assertSame(1, $manager->table('users')->insertRow([
+            'id' => '01J00000000000000000000000',
+            'name' => 'Puff',
+        ]));
+        self::assertSame('Puff', $manager->table('users')->first()['name'] ?? null);
+    }
+
     public function testReusesConnectionWithinFiberAndIsolatesFibers(): void
     {
         $manager = $this->manager();
