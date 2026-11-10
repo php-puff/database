@@ -20,6 +20,7 @@ use Illuminate\Database\PostgresConnection;
 use Illuminate\Database\SQLiteConnection;
 use Puff\Database\Contract\DatabaseManagerInterface;
 use Puff\Database\Driver;
+use Puff\Database\Exception\DatabaseException;
 use UnitEnum;
 use WeakMap;
 
@@ -48,6 +49,10 @@ final class EloquentConnectionResolver implements ConnectionResolverInterface
             default => $name,
         };
         $connections = &$this->connections();
+        if (isset($connections[$name])
+            && $connections[$name]->getConfig('search_path') !== $this->databases->schema($name)) {
+            throw new DatabaseException('Eloquent connection belongs to a different database schema.');
+        }
         return $connections[$name] ??= $this->create($name);
     }
 
@@ -95,8 +100,9 @@ final class EloquentConnectionResolver implements ConnectionResolverInterface
     private function create(string $name): EloquentConnection
     {
         $configuration = $this->databases->configuration($name);
-        $pdo = $configuration->connect();
+        $pdo = $this->databases->connectForAdapter($name);
         $config = $configuration->publicValues() + ['name' => $name];
+        $config['search_path'] = $this->databases->schema($name);
         $connection = match ($configuration->driver) {
             Driver::MySql => new MySqlConnection($pdo, $configuration->database, $configuration->prefix, $config),
             Driver::PostgreSql => new PostgresConnection($pdo, $configuration->database, $configuration->prefix, $config),

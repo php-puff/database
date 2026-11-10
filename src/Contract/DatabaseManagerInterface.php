@@ -14,6 +14,7 @@ namespace Puff\Database\Contract;
 use Closure;
 use Puff\Database\ConnectionConfig;
 use Puff\Database\Query;
+use PDO;
 use UnitEnum;
 
 interface DatabaseManagerInterface
@@ -26,6 +27,12 @@ interface DatabaseManagerInterface
     public function configurations(): array;
 
     public function defaultConnection(): string;
+
+    public function setSchema(string $schema): void;
+
+    public function schema(string|UnitEnum|null $name = null): ?string;
+
+    public function connectForAdapter(string|UnitEnum|null $name = null): PDO;
 
     public function table(string $table, string|UnitEnum|null $connection = null): Query;
 

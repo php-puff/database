@@ -39,6 +39,34 @@ return [
 
 Supported drivers are MySQL, PostgreSQL, and SQLite. Configuration is normalized into an immutable `ConnectionConfig`; credentials are never included in its public values or query logs.
 
+### PostgreSQL schema selection
+
+Set one PostgreSQL schema as the connection's initial `search_path`:
+
+```php
+'pgsql' => [
+    'driver' => 'pgsql',
+    'database' => 'prm',
+    'search_path' => 'public',
+],
+```
+
+For a request that belongs to another schema, select it **before any Puff or Eloquent connection opens**:
+
+```php
+$databases->setSchema('tenant_acme');
+// Puff query builders and Eloquent models now resolve tables in tenant_acme.
+```
+
+`setSchema()` accepts one PostgreSQL identifier, not a search path list. The schema must exist; a missing schema fails instead of falling back to `public`. The selection belongs to the current Fiber (or the main execution context). Once a Puff or Eloquent connection opens, another selection in that scope throws. The application's request scope cleanup disconnects both adapters and clears the selection; standalone callers must clear both before reusing the same scope:
+
+```php
+$eloquentResolver->clear();
+$databases->disconnectAll();
+```
+
+The framework does not infer a schema from a host name. Resolve a trusted tenant mapping before calling `setSchema()`. Select the schema before constructing a migrator or running a seeder; each schema then has its own migration history and seed data. Schema names must be supplied by trusted application code, and database privileges should prevent the runtime account from accessing unrelated schemas.
+
 ### Table prefix
 
 Set `prefix` per connection to prepend it to table names used by Puff's query builder and supported ORM adapters:

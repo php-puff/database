@@ -14,6 +14,7 @@ namespace Puff\Database;
 use BackedEnum;
 use Closure;
 use Fiber;
+use PDO;
 use Psr\Log\LoggerInterface;
 use Puff\Database\Contract\ConnectionInterface;
 use Puff\Database\Contract\DatabaseManagerInterface;
@@ -59,11 +60,15 @@ final class DatabaseManager implements DatabaseManagerInterface
         if (!isset($this->connections[$name])) {
             throw new DatabaseException("Database connection [{$name}] is not configured.");
         }
-        return $context->connections[$name] ??= new Connection(
-            $this->connections[$name],
-            $this->connections[$name]->connect(),
-            $this->logger === null ? null : ($this->logger)(),
-        );
+        if (!isset($context->connections[$name])) {
+            $pdo = $this->connectForAdapter($name);
+            $context->connections[$name] = new Connection(
+                $this->connections[$name],
+                $pdo,
+                $this->logger === null ? null : ($this->logger)(),
+            );
+        }
+        return $context->connections[$name];
     }
 
     public function configuration(string|UnitEnum|null $name = null): ConnectionConfig
@@ -76,6 +81,32 @@ final class DatabaseManager implements DatabaseManagerInterface
     public function defaultConnection(): string
     {
         return $this->default;
+    }
+
+    public function setSchema(string $schema): void
+    {
+        ConnectionConfig::validateSchema($schema);
+        if ($this->configuration()->driver !== Driver::PostgreSql) {
+            throw new DatabaseException('Database schema selection requires a PostgreSQL default connection.');
+        }
+        $context = $this->context();
+        if ($context->connectionOpened) {
+            throw new DatabaseException('Database schema must be selected before opening a connection.');
+        }
+        $context->schema = $schema;
+    }
+
+    public function schema(string|UnitEnum|null $name = null): ?string
+    {
+        return $this->context()->schema ?? $this->configuration($name)->searchPath;
+    }
+
+    public function connectForAdapter(string|UnitEnum|null $name = null): PDO
+    {
+        $configuration = $this->configuration($name);
+        $pdo = $configuration->connect($this->context()->schema);
+        $this->context()->connectionOpened = true;
+        return $pdo;
     }
 
     public function configurations(): array

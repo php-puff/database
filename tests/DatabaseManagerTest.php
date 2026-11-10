@@ -15,6 +15,7 @@ use Fiber;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 use Puff\Database\DatabaseManager;
+use Puff\Database\Exception\DatabaseException;
 
 #[RequiresPhpExtension('pdo_sqlite')]
 final class DatabaseManagerTest extends TestCase
@@ -117,6 +118,18 @@ final class DatabaseManagerTest extends TestCase
         foreach ($fibers as $fiber) {
             $fiber->resume();
         }
+    }
+
+    public function testSchemaSelectionRequiresPostgres(): void
+    {
+        $this->expectException(DatabaseException::class);
+        $this->manager()->setSchema('tenant_one');
+    }
+
+    public function testRejectsUnsafeSchemaNames(): void
+    {
+        $this->expectException(DatabaseException::class);
+        $this->manager()->setSchema('tenant_a, public');
     }
 
     private function manager(): DatabaseManager

@@ -28,6 +28,7 @@ final readonly class ConnectionConfig
         public string $charset = 'utf8mb4',
         public string $prefix = '',
         public array $options = [],
+        public ?string $searchPath = null,
     ) {
         if ($name === '' || !\preg_match('/^[A-Za-z_][A-Za-z0-9_.-]*$/', $name)) {
             throw new DatabaseException('Database connection name is invalid.');
@@ -37,6 +38,9 @@ final readonly class ConnectionConfig
         }
         if ($prefix !== '' && \preg_match('/^[A-Za-z0-9_]+$/D', $prefix) !== 1) {
             throw new DatabaseException("Database connection [{$name}] has an invalid table prefix.");
+        }
+        if ($searchPath !== null) {
+            self::validateSchema($searchPath);
         }
     }
 
@@ -48,6 +52,10 @@ final readonly class ConnectionConfig
         $options = $values['options'] ?? [];
         if (!\is_array($options)) {
             throw new DatabaseException("Database connection [{$name}] options must be an array.");
+        }
+        $searchPath = $values['search_path'] ?? null;
+        if ($searchPath !== null && !\is_string($searchPath)) {
+            throw new DatabaseException("Database connection [{$name}] search_path must be a schema name.");
         }
         /** @var array<int, mixed> $options */
         return new self(
@@ -65,6 +73,7 @@ final readonly class ConnectionConfig
             (string) ($values['charset'] ?? 'utf8mb4'),
             (string) ($values['prefix'] ?? ''),
             $options,
+            $searchPath,
         );
     }
 
@@ -83,16 +92,35 @@ final readonly class ConnectionConfig
         return $this->driver === Driver::MySql ? $dsn . ';charset=' . $this->charset : $dsn;
     }
 
-    public function connect(): PDO
+    public function connect(?string $schema = null): PDO
     {
         $options = $this->options + [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ];
         try {
-            return new PDO($this->dsn(), $this->username, $this->password, $options);
+            $pdo = new PDO($this->dsn(), $this->username, $this->password, $options);
+            $schema ??= $this->searchPath;
+            if ($this->driver === Driver::PostgreSql && $schema !== null) {
+                self::validateSchema($schema);
+                $statement = $pdo->prepare('SELECT 1 FROM pg_catalog.pg_namespace WHERE nspname = ?');
+                $statement->execute([$schema]);
+                if ($statement->fetchColumn() === false) {
+                    throw new DatabaseException("Database schema [{$schema}] does not exist.");
+                }
+                $statement = $pdo->prepare("SELECT pg_catalog.set_config('search_path', ?, false)");
+                $statement->execute(['"' . $schema . '"']);
+            }
+            return $pdo;
         } catch (\PDOException $exception) {
             throw new DatabaseException("Unable to connect to database [{$this->name}].", 0, $exception);
+        }
+    }
+
+    public static function validateSchema(string $schema): void
+    {
+        if (\preg_match('/^[A-Za-z_][A-Za-z0-9_]{0,62}$/D', $schema) !== 1) {
+            throw new DatabaseException('Database schema name is invalid.');
         }
     }
 
@@ -106,6 +134,7 @@ final readonly class ConnectionConfig
             'port' => $this->port,
             'charset' => $this->charset,
             'prefix' => $this->prefix,
+            'search_path' => $this->searchPath,
         ];
     }
 }

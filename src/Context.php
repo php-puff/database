@@ -19,6 +19,10 @@ final class Context
     /** @var array<string, ConnectionInterface> */
     public array $connections = [];
 
+    public ?string $schema = null;
+
+    public bool $connectionOpened = false;
+
     public function close(): void
     {
         foreach ($this->connections as $connection) {
